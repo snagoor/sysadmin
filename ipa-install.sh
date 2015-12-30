@@ -17,11 +17,11 @@ firewall-cmd --permanent --add-port=80/tcp \
 --add-port=53/udp \
 --add-port=123/udp
 
-## Get the kerberos principal for admin user ##
-echo "redhat123" | kinit admin
-
 ## Reload Firewall Rules ##
 firewall-cmd --reload
+
+## Get the kerberos principal for admin user ##
+echo "redhat123" | kinit admin
 
 # Create a pub directory under default /var/www/html/ to export the CA certificate ##
 mkdir /var/www/html/pub
@@ -34,9 +34,9 @@ ipa config-mod --defaultshell=/bin/bash
 for i in {1..20}; do \
 mkdir -p /home/guests/ldapuser$i
 echo "redhat" | ipa user-add --first=LDAP --last=User$i ldapuser$i --homedir=/home/guests/ldapuser$i --initials=LU$i --password
-chown ldapuser$i.ldapuser$i /home/guests/ldapuser$i
+chmod 770 /home/guests/ldapuser$i
 cp -f /etc/skel/.bash* /home/guests/ldapuser$i
-chown ldapuser$i.  /home/guests/ldapuser$i/.bash*
+chown -R ldapuser$i.ldapuser$i /home/guests/ldapuser$i
 done
 
 ## Configure NFS mount to export home directories ##
@@ -46,9 +46,9 @@ cat > /etc/exports << EOF
 EOF
 
 ## Add firewall rules for NFS service ##
-firewall-cmd --permanent --add-service=nfs --add-service=rpc-bind --add-service=mountd ; firewall-cmd --reload
+firewall-cmd --permanent --add-service=nfs --add-service=rpc-bind --add-service=mountd
+firewall-cmd --reload
 
 ## Restart the NFS service to take effect ##
-
 systemctl start rpcbind nfs-server
 systemctl enable rpcbind nfs-server
