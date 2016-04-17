@@ -32,6 +32,6 @@ virbr2 : 192.168.100.1/24
 virbr1 : 172.25.18.1/24
 virbr3 : 192.168.1.1/24
 
-# Script convert RHEL NIC's to older style ethX interfaces [rhel7_old_nic_style.sh]
+# Script which converts RHEL NIC's to older style ethX interfaces [rhel7_old_nic_style.sh]
 
 Script which converts the 'biosdevname' naming system NIC's to older style ethX scripts
