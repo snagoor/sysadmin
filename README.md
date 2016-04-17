@@ -1,10 +1,10 @@
-# IPA Install Script
+# IPA Install Script [ipa-install.sh]
 Script would help to install IPA Server for testing purposes.
 
-# System Info
+# System Info [sysinfo.sh]
 This Script is helpful to print useful info about the system.
 
-%%%%%% SAMPLE OUTPUT %%%%%
+### SAMPLE OUTPUT ###
 
 System Information as on :- Sat Apr 16 02:12:38 IST 2016 
 
@@ -31,3 +31,7 @@ virbr4 : 192.168.2.1/24
 virbr2 : 192.168.100.1/24
 virbr1 : 172.25.18.1/24
 virbr3 : 192.168.1.1/24
+
+# Script convert RHEL NIC's to older style ethX interfaces [rhel7_old_nic_style.sh]
+
+Script which converts the 'biosdevname' naming system NIC's to older style ethX scripts
