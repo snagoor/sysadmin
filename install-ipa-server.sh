@@ -44,6 +44,6 @@ firewall-cmd --permanent --add-port=80/tcp \
 firewall-cmd --reload
 
 # Get the kerberos principal for admin user #
-echo "redhat123" | kinit admin
+echo "$PASSWORD" | kinit admin
 
 echo -e "\nIPA Server installation success\n"
