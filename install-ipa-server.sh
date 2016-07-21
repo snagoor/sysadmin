@@ -20,7 +20,7 @@ if [ "$pkgchk" -ne 0 ]; then
 fi
 
 # Configure IPA with Simple Options #
-ipa-server-install --hostname="$HOSTNAME" -n "$(hostname -d)" -r "$(hostname -d| tr [a-z] [A-Z])" -p "$PASSWORD" -a "$PASSWORD" --idstart=1999 --idmax=5000 --no-forwarders -U
+ipa-server-install --hostname="$HOSTNAME" -n "$(hostname -d)" -r "$(hostname -d| tr [a-z] [A-Z])" -p "$PASSWORD" -a "$PASSWORD" --idstart=1999 --idmax=5000 -U
 
 # Check to see if the above was successful or not #
 chk=$(echo $?)
