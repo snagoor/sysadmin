@@ -10,7 +10,7 @@
 
 unset PASSWORD pkgchk installchk
 echo ""
-read -s -p "Enter the password for the admin user : " PASSWORD
+read -s -p "Enter password for the admin user : " PASSWORD
 
 if [ -z "$PASSWORD" ]; then
    echo -e "\nSetting the default password RedHat1!\n"
