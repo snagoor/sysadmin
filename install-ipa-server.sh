@@ -1,14 +1,14 @@
-### This script is intended for testing IPA wiht basic installation ###
+### This script is intended for testing IPA with basic installation + bind ###
 ### Below are the mandatory steps that one should take care before executing this script ###
-### 1. RHEL 7.2 x86_64 system is installed with 4GB RAM ###
+### 1. Fresh RHEL 7.2 x86_64 system is installed with 4GB RAM ###
 ### 2. IP Address is configured on the system ###
-### 3. Hostname would be automatically configured as a part of script run ###
+### 3. Hostname would be automatically configured as a part of script execution ###
 ### 4. Provide password when promoted, which should be more than 8 characters (mandatory) ###
 ### If you find any issues with this script, send a pull request or email nagoor.s@gmail.com ###
 
 #! /bin/bash
 
-unset PASSWORD
+unset PASSWORD pkgchk installchk
 echo ""
 read -s -p "Enter the password for the admin user : " PASSWORD
 
@@ -37,8 +37,8 @@ fi
 ipa-server-install --hostname="$HOSTNAME" -n "$(hostname -d)" -r "$(hostname -d| tr [a-z] [A-Z])" -p "$PASSWORD" -a "$PASSWORD" --idstart=1999 --idmax=5000 --setup-dns --forwarder 8.8.8.8 -U
 
 # Check to see if the above was successful or not #
-chk=$(echo $?)
-if [ "$chk" -ne 0 ]; then
+installchk=$(echo $?)
+if [ "$installchk" -ne 0 ]; then
    echo -e "\nSomething went wrong, exiting! \n"
    exit 1
 fi
