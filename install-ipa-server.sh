@@ -33,7 +33,7 @@ if [ "$pkgchk" -ne 0 ]; then
    exit 1
 fi
 
-# Configure IPA with Simple Options #
+# Configure IPA with basic options #
 ipa-server-install --hostname="$HOSTNAME" -n "$(hostname -d)" -r "$(hostname -d| tr [a-z] [A-Z])" -p "$PASSWORD" -a "$PASSWORD" --idstart=1999 --idmax=5000 --setup-dns --forwarder 8.8.8.8 -U
 
 # Check to see if the above was successful or not #
@@ -43,7 +43,7 @@ if [ "$installchk" -ne 0 ]; then
    exit 1
 fi
 
-# Add FirewallD rules necessary IPA Server #
+# Add FirewallD rules necessary for IPA Server #
 systemctl start firewalld
 systemctl enable firewalld
 
