@@ -1,9 +1,10 @@
 ### This script is intended for testing IPA with basic installation + bind ###
 ### Below are the mandatory steps that one should take care before executing this script ###
-### 1. Fresh RHEL 7.2 x86_64 system is installed with 4GB RAM ###
-### 2. IP Address is configured on the system ###
-### 3. Hostname would be automatically configured as a part of script execution ###
-### 4. Provide password when promoted, which should be more than 8 characters (mandatory) ###
+### 1. Fresh RHEL 7.2 x86_64 system is installed with 4GB RAM (Mandatory) ###
+### 2. IP Address is configured on the system (Mandatory) ###
+### 3. System should either be registered to base repository or configure local yum repository using RHEL7.2 DVD/ISO (Mandatory) ### 
+### 4. Hostname would be automatically configured as a part of script execution ###
+### 5. Provide password when promoted, which should be more than 8 characters (Mandatory) ###
 ### If you find any issues with this script, send a pull request or email nagoor.s@gmail.com ###
 
 #! /bin/bash
