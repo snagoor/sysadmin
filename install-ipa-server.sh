@@ -2,9 +2,9 @@
 ### Below are the mandatory steps that one should take care before executing this script ###
 ### 1. Fresh RHEL 7.2 x86_64 system is installed with 4GB RAM (Mandatory) ###
 ### 2. IP Address is configured on the system (Mandatory) ###
-### 3. System should either be registered to base repository or configure local yum repository using RHEL7.2 DVD/ISO (Mandatory) ### 
+### 3. System should either be registered to base repository or configure local yum repository using RHEL7.2 DVD/ISO (Mandatory) ###
 ### 4. Hostname would be automatically configured as a part of script execution ###
-### 5. Provide password when promoted, which should be more than 8 characters (Mandatory) ###
+### 5. Provide password when promoted, which should be more than 8 characters (Mandatory). If password is not provided, then default password would be set as "RedHat1!" ###
 ### If you find any issues with this script, send a pull request or email nagoor.s@gmail.com ###
 
 #! /bin/bash
@@ -35,7 +35,7 @@ if [ "$pkgchk" -ne 0 ]; then
 fi
 
 # Configure IPA with basic options #
-ipa-server-install --hostname="$HOSTNAME" -n "$(hostname -d)" -r "$(hostname -d| tr [a-z] [A-Z])" -p "$PASSWORD" -a "$PASSWORD" --idstart=1999 --idmax=5000 --setup-dns --forwarder 8.8.8.8 -U
+ipa-server-install --hostname="$HOSTNAME" -n "$(hostname -d)" -r "$(hostname -d| tr [a-z] [A-Z])" -p "$PASSWORD" -a "$PASSWORD" --idstart=1999 --idmax=5000 --setup-dns --no-forwarders -U
 
 # Check to see if the above was successful or not #
 installchk=$(echo $?)
