@@ -1,0 +1,435 @@
+#!/bin/bash
+
+script_reset() {
+
+        unset RHEL7 RHEL6 CentOS7 CentOS6 FEDORA
+
+}
+
+root_check() {
+
+        # Make sure only root can run our script
+        if [ "$(id -u)" != "0" ]; then
+           echo "This script must be run as root" 1>&2
+           exit 1
+        fi
+}
+
+check_name_resolution() {
+
+        NS=`getent hosts $HOSTNAME`
+        if [ $NS -ne 0 ]; then
+           echo "Name Resolution error. Kindly check the Name Resolution or add the hostname entries in /etc/hosts file"
+           exit $NS
+        fi
+}
+
+disable_ipv6() {
+
+        sysctl -w net.ipv6.conf.all.disable_ipv6=1
+        sysctl -w net.ipv6.conf.default.disable_ipv6=1
+        echo -e "IPv6 is disabled on this system, Reboot the system to effect these changes\n"
+        read -p "Would you like to reboot your system Now? : " REBOOT_ANS
+        if [ "$REBOOT_ANS" == "Y" || "$REBOOT_ANS" == 'y' ]; then
+           echo "Reeboting the system now"
+           reboot
+        else
+           echo "Please ensure that you reboot your system to disable IPv6"
+           echo -e "Configuration won't take effect until you reboot your system\n"
+        fi
+
+}
+
+install_rhel7_packages() {
+
+        rpm -ivh http://yum.puppetlabs.com/puppetlabs-release-el-7.noarch.rpm
+        rpm -ivh http://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+        rpm -ivh http://yum.theforeman.org/releases/1.11/el7/x86_64/foreman-release.rpm
+}
+
+install_rhel6_packages() {
+
+        rpm -ivh http://yum.puppetlabs.com/puppetlabs-release-el-6.noarch.rpm
+        rpm -ivh http://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm
+        rpm -ivh http://yum.theforeman.org/releases/1.11/el6/x86_64/foreman-release.rpm
+}
+
+install_fedora_packages() {
+
+        rpm -ivh http://yum.puppetlabs.com/puppetlabs-release-fedora-21.noarch.rpm
+        rpm -ivh http://yum.theforeman.org/releases/1.11/f21/x86_64/foreman-release.rpm
+}
+
+check_internet() {
+
+        if curl --silent --head http://www.google.com/ | egrep "20[0-9] Found|30[0-9] Found" >/dev/null
+        then
+           echo "Internet status: OK"
+           echo "Continuing"
+        else
+           echo "Internet status: ERROR, Please check your network connectivity and re-run the script"
+           exit 99
+        fi
+
+}
+
+check_base_repo() {
+
+        REPO_COUNT=`yum repolist | grep repolist | awk '{print $2}' | tr -d ,`
+        if [ $REPO_COUNT -lt 4620 ]; then
+           echo "Base repository doesn't seems to be subscribed OR Package count seems to be less."
+           echo "Ensure that the system is subscribed to base repository. Exiting without any changes"
+           exit 1
+        fi
+
+}
+
+check_os_version() {
+
+        RHEL7=`grep Maipo /etc/system-release`
+        RHEL6=`grep Santiago /etc/system-release`
+        CentOS7=`grep Core /etc/system-release`
+        CentOS6=`grep Final /etc/system-release`
+        FEDORA=`grep Fedora /etc/system-release`
+
+        if [ -n "$RHEL7" ] || [ -n "$CentOS7" ]; then
+
+           install_rhel7_packages
+           check_base_repo
+           setup_rhel7_scl_repo
+           setup_centos7_repo
+	   setup_firewall
+           # echo "RHEL 7 Detected"
+
+
+        elif [ -n "$RHEL6" ] || [ -n "$CentOS6" ]; then
+
+           install_rhel6_packages
+           check_base_repo
+           setup_rhel6_scl_repo
+           setup_centos6_repo
+	   setup_iptables
+           # echo "RHEL 6 Detected"
+
+        elif [ -n "$FEDORA" ]; then
+
+           install_fedora_packages
+	   setup_firewall
+           # echo "Fedora Detected"
+
+        else
+
+           echo "Unsupported OS Detected, "
+
+        fi
+}
+
+install_foreman_packages() {
+
+        yum install -y foreman foreman-proxy foreman-compute foreman-debug foreman-ec2 foreman-libvirt foreman-ovirt foreman-vmware foreman-cli foreman-console foreman-selinux foreman-postgresql foreman-installer
+
+}
+
+select_main() {
+
+        echo -e "\nPlease select an option from the below\n"
+        echo "**************************************************************************************************"
+        echo -e "\t1. Install Foreman with Basic Setup"
+        echo -e "\t2. Install Foreman with All In One Setup (Katello/DHCP/DNS/TFTP)"
+        echo -e "\t3. Install Basic setup of Foreman and Katello"
+        echo -e "\t4. Install only Katello"
+        echo -e "\t5. Reset installation"
+        echo -e "\t6. Quit\n"
+        read -p "Answer : " ANS
+}
+
+setup_rhel6_scl_repo() {
+
+cat > /etc/yum.repos.d/scl.repo << EOF
+[rhscl-repo]
+name=Software Collections Repository
+baseurl=http://mirror.centos.org/centos/6/sclo/x86_64/rh/
+gpgcheck=0
+enabled=1
+EOF
+
+}
+
+setup_rhel7_scl_repo() {
+
+cat > /etc/yum.repos.d/scl.repo << EOF
+[rhscl-repo]
+name=Software Collections Repository
+baseurl=http://mirror.centos.org/centos/7/sclo/x86_64/rh/
+gpgcheck=0
+enabled=1
+EOF
+
+}
+
+setup_centos6_repo() {
+
+cat > /etc/yum.repos.d/centos.repo << EOF
+[centos6_repo]
+name=CentOS 6Server Repository
+baseurl=http://mirror.centos.org/centos/6/os/x86_64/
+gpgcheck=0
+enabled=1
+EOF
+
+}
+
+
+
+setup_centos7_repo() {
+
+cat > /etc/yum.repos.d/centos.repo << EOF
+[centos7_repo]
+name=CentOS 7Server Repository
+baseurl=http://mirror.centos.org/centos/7/os/x86_64/
+gpgcheck=0
+enabled=1
+EOF
+
+}
+
+
+setup_firewall() {
+
+## Setting up Firewall
+
+echo -e "\n Configuring Firewall, Please Wait ... \n"
+
+case $ANS in
+
+        1)
+        for i in 80 443 8140 8443
+        do firewall-cmd --permanent --add-port="$i/tcp"
+        done
+
+        firewall-cmd --complete-reload
+        ;;
+
+        2)
+        for i in 53 80 443 3000 3306 5432 8140 8443 9090 5647 {5910..5930}
+        do firewall-cmd --permanent --add-port="$i/tcp"
+        done
+
+        for i in 53 67 68 69
+        do firewall-cmd --permanent --add-port="$i/udp"
+        done
+
+        firewall-cmd --complete-reload
+        ;;
+
+        3)
+        for i in 80 443 8140 8443 9090 5647
+        do firewall-cmd --permanent --add-port="$i/tcp"
+        done
+        firewall-cmd --complete-reload
+        ;;
+
+        4)
+
+        ;;
+
+esac
+
+echo -e "\n Firewall Setup Done \n"
+
+}
+
+setup_iptables() {
+
+echo -e "\n Configuring IP Tables, Please Wait ... \n"
+
+case $ANS in
+
+        1)
+        for i in 80 443 8140 8443
+        do iptables -I INPUT 5 -m state --state NEW -p tcp --dport $i -j ACCEPT
+        done
+
+        iptables-save > /etc/sysconfig/iptables
+        ;;
+
+        2)
+        for i in 53 80 443 3000 3306 5432 8140 8443 9090 5647 {5910..5930}
+        do iptables -I INPUT 5 -m state --state NEW -p tcp --dport $i -j ACCEPT
+        done
+
+        for i in 53 67 68 69
+        do iptables -I INPUT 5 -m state --state NEW -p udp --dport $i -j ACCEPT
+        done
+
+        iptables-save > /etc/sysconfig/iptables
+        ;;
+
+        3)
+        for i in 80 443 8140 8443 9090 5647
+        do iptables -I INPUT 5 -m state --state NEW -p tcp --dport $i -j ACCEPT
+        done
+
+        iptables-save > /etc/sysconfig/iptables
+        ;;
+
+        4)
+
+        ;;
+
+esac
+
+echo -e "\n IP Tables Setup Done \n"
+
+}
+
+info() {
+
+case $ANS in
+
+        1)
+        read -p " Enter the Organization: " ORG
+        read -p " Enter the Location: " LOC
+        read -p " Enter the User Name: " USER
+        read -s -p " Enter the Password: " PASS
+        confirmation
+        ;;
+
+        2)
+        read -p " Enter the Organization: " ORG
+        read -p " Enter the Location: " LOC
+        read -p " Enter the User Name: " USER
+        read -s -p " Enter the Password: " PASS
+        echo -e "\n"
+        read -p " Enter the DHCP Interface: " DHINT
+        read -p " Enter the DHCP GATEWAY: " DHGAT
+        read -p " Enter the DHCP Name servers: " DHNS
+        read -p " Enter the DHCP Range: " DHRAN
+        read -p " Enter the DNS Forwarder IP: " DNFIP
+        read -p " Enter the DNS Interface: " DNINT
+        read -p " Enter the Reverse DNS zone: " DNRZIP
+        read -p " Enter the DNS Zone name: " DNZON
+        confirmation
+        ;;
+
+esac
+
+}
+
+confirmation() {
+
+case $ANS in
+
+        1)
+        echo -e "\n\n Your Organization: $ORG "
+        echo -e " Your Location: $LOC "
+        echo -e " Your User Name: $USER "
+        ;;
+
+        2)
+        echo -e "\n\n Your Organization: $ORG "
+        echo -e " Your Location: $LOC "
+        echo -e " Your User Name: $USER "
+        echo -e " Your DHCP Interface: $DHINT "
+        echo -e " Your DHCP GATEWAY: $DHGAT "
+        echo -e " Your DHCP Name servers: $DHNS "
+        echo -e " Your DHCP Range: $DHRAN "
+        echo -e " Your DNS Forwarder IP: $DNFIP "
+        echo -e " Your DNS Interface: $DNINT "
+        echo -e " Your Reverse DNS zone: $DNRZIP "
+        echo -e " Your DNS Zone name: $DNZON "
+        ;;
+
+esac
+
+read -p " Hit enter to confirm Your Details (E) to Edit: " CONF
+
+if [ $CONF == "E" ]; then
+info
+else
+echo -e "\n Your Details are confirmed \n"
+fi
+
+}
+
+
+foreman_basic() {
+
+        install_foreman_packages
+        info
+        foreman-installer --foreman-initial-organization $ORG --foreman-initial-location $LOC --foreman-admin-username $USER --foreman-admin-password $PASS
+
+
+}
+
+foreman_all_in_one() {
+
+        install_foreman_packages
+        info
+        foreman-installer --foreman-proxy-dhcp true --foreman-proxy-dhcp-interface $DHINT --foreman-proxy-dhcp-gateway $DHGAT --foreman-proxy-dhcp-nameservers $DHNS --foreman-proxy-dhcp-range "$DHRAN" --foreman-proxy-dns true --foreman-proxy-dns-forwarders $DNFIP --foreman-proxy-dns-interface $DNINT --foreman-proxy-dns-reverse $DNRZIP --foreman-proxy-dns-zone $DNZON --foreman-proxy-tftp true --foreman-proxy-tftp-servername $(hostname)
+
+}
+
+foreman_and_katello_basic() {
+
+echo "Installation of Katello and Foreman"
+
+}
+
+katello_only() {
+
+echo "Installation of Katello"
+
+}
+
+installation_reset() {
+
+echo "Resetting the Foreman Installation"
+
+}
+
+quit() {
+          echo -e "\nQuit option selected\n"
+          exit 0
+}
+
+usage() {
+          echo -e "\nWrong option selected, Please select options [1-6]\n"
+          exit 1
+}
+
+check_internet
+script_reset
+root_check
+check_os_version
+select_main
+
+case $ANS in
+        1)
+           foreman_basic
+           ;;
+
+        2)
+           foreman_all_in_one
+           ;;
+
+        3)
+           foreman_and_katello_basic
+           ;;
+
+        4)
+           katello_only
+           ;;
+
+        5)
+           installation_reset
+           ;;
+
+        6)
+           quit
+           ;;
+
+        *)
+           usage
+           ;;
+esac

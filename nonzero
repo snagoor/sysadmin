@@ -1,0 +1,8 @@
+read -s -p "Enter the password for the admin user : " PASSWD
+
+if [ -z "$PASSWD" ]; then
+   echo -e "\nSetting the default password RedHat1!\n"
+   PASSWD="RedHat1!"
+fi
+echo "$PASSWD"
+
