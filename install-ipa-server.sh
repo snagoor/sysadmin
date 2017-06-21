@@ -25,7 +25,10 @@ hostname ipa.lab.example.com
 echo -e "$(hostname -I) \t $(hostname -f) \t $(hostname -s)" >> /etc/hosts
 
 # Install IPA related packages #
-yum install ipa-server bind bind-dyndb-ldap ipa-server-dns -y
+yum install ipa-server bind bind-dyndb-ldap ipa-server-dns rng-tools -y
+
+# Generating entropy for ipa-server-install command
+rngd -r /dev/urandom
 
 # Check if the package installation was OK #
 pkgchk=$(echo $?)
