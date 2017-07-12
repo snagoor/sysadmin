@@ -21,16 +21,17 @@ fi
 
 function os_check() {
 # Check Operating System version, its only supported on RHEL 7 or CentOS 7 derivatives
-uname -r | grep el7
+uname -r | grep el7 >/dev/null 2>&1
 EL7_OS=$(echo $?)
-if [ "$EL7_OS" -ne 0 ]; then
+if [ "$EL7_OS" != "0" ]; then
    echo -e "\nIncompatible OS detected. Only RHEL 7 and CentOS 7 derivatives are supported. Exiting !\n"
+fi
 }
 
 function name_resolution_check() {
 # Function to check the name resolution on the system
 CHECK_NR=$(getent hosts "$HOSTNAME")
-if [ "$CHECK_NR" -ne 0 ]; then
+if [ "$CHECK_NR" != "0" ]; then
    echo -e "\nName Resolution error. Adding hostname entry in /etc/hosts file\n"
    echo -e "$(hostname -I)\t $(hostname -f)\t $(hostname -s)" >> /etc/hosts
 fi
@@ -38,7 +39,7 @@ fi
 
 function hostname_check() {
 # check if hostname is not localhost
-if [ "$HOSTNAME" == "localhost" || "$(hostname -f)" == "localhost.localdomain" ]; then
+if [ "$HOSTNAME" == "localhost" ] || [ "$(hostname -f)" == "localhost.localdomain" ]; then
    echo -e "\nHostname is Invalid. Please change hostname"
    change_hostname
 fi
@@ -47,7 +48,7 @@ fi
 function change_hostname() {
 read -p "Please provide a Fully Qualified Domain Name (FQDN)[Ex: ipa.example.com] : " READ_FQDN
 FQDN_CHECK=$(tr -dc '.' <<< $READ_FQDN | awk '{print length; }')
-if [ "$FQDN_CHECK" -lt 2 ]; then
+if [ "$FQDN_CHECK" -lt "2" ]; then
    read -p "\nIncorrect FQDN name specified\n. Would you like to retry changing hostname? [Y/N] : " YN
    if [ "$YN" == "Y" || "$YN" == "y" ]; then
       change_hostname
@@ -81,13 +82,13 @@ os_check
 echo
 read -s -p "NOTE: Password must be more than 8 characters. Enter password for the admin user : " PASSWORD
 # If provided password is empty or less than 8 characters, then set default password #
-if [ "${#PASSWORD}" -lt 8 || -z "$PASSWORD" ]; then
+if [ -z "$PASSWORD" ] || [ "${#PASSWORD}" -lt "8" ]; then
    echo -e "\nLength of the password is less than 8 characters. Setting the default password RedHat1!\n"
    PASSWORD="RedHat1!"
 fi
 
 # Prompt user to change hostname and entry in /etc/hosts file #
-read -p "Current Hostname is : $HOSTNAME. Would you like to change it ? [Y/N] : " READ_INPUT
+read -p "Current Hostname is $HOSTNAME. Would you like to change it ? [Y/N] : " READ_INPUT
 if [ "$READ_INPUT" == "Y" || "$READ_INPUT" == "y" ]; then
    change_hostname
 else
@@ -99,7 +100,7 @@ package_installation
 
 # Check if the package installation was OK #
 PKG_CHECK=$(echo $?)
-if [ "$PKG_CHECK" -ne 0 ]; then
+if [ "$PKG_CHECK" -ne "0" ]; then
    echo -e "\nCan't install ipa-server package! Something went wrong, exiting! \n"
    exit 1
 fi
@@ -108,11 +109,15 @@ fi
 rngd -r /dev/urandom
 
 # Configure IPA with basic options #
-ipa-server-install --hostname="$HOSTNAME" -n "$(hostname -d)" -r "$(hostname -d| tr [a-z] [A-Z])" -p "$PASSWORD" -a "$PASSWORD" --idstart=1999 --idmax=5000 --setup-dns --no-forwarders -U
-
+read -p "Would you like to configure Integrated DNS with IPA ? [y/n] : " DNS_YN
+if [ "$DNS_YN" == "Y" || "$DNS_YN" == "y" ]; then
+   ipa-server-install --hostname="$HOSTNAME" -n "$(hostname -d)" -r "$(hostname -d| tr [a-z] [A-Z])" -p "$PASSWORD" -a "$PASSWORD" -P "$PASSWORD" --idstart=1999 --idmax=5000 --setup-dns --no-forwarders -U
+else 
+   ipa-server-install --hostname="$HOSTNAME" -n "$(hostname -d)" -r "$(hostname -d| tr [a-z] [A-Z])" -p "$PASSWORD" -a "$PASSWORD" -P "$PASSWORD" --idstart=1999 --idmax=5000 --no-forwarders -U
+fi
 # Check to see if the above was successful or not #
 INSTALL_CHECK=$(echo $?)
-if [ "$INSTALL_CHECK" -ne 0 ]; then
+if [ "$INSTALL_CHECK" -ne "0" ]; then
    echo -e "\nSomething went wrong during execution of ipa-server-install command"
    echo -e "Check /var/log/ipaserver-install.log for errors, Exiting! \n"
    exit 1
@@ -134,10 +139,10 @@ firewall-cmd --permanent --add-port=80/tcp \
 --add-port=88/udp \
 --add-port=464/udp \
 --add-port=53/udp \
---add-port=123/udp
+--add-port=123/udp >/dev/null 2>&1
 
 # Reload Firewall Rules #
-firewall-cmd --reload
+firewall-cmd --reload >/dev/null 2>&1
 
 # Get the kerberos principal for admin user #
 echo "$PASSWORD" | kinit admin
