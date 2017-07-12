@@ -9,7 +9,7 @@
 
 #! /bin/bash
 
-unset PASSWORD pkgchk installchk
+unset PASSWORD PKGCHK INSTALLCHK
 echo ""
 read -s -p "Enter password for the admin user : " PASSWORD
 
@@ -28,32 +28,33 @@ echo -e "$(hostname -I) \t $(hostname -f) \t $(hostname -s)" >> /etc/hosts
 yum update -y
 
 # Install IPA related packages #
-yum install ipa-server bind bind-dyndb-ldap ipa-server-dns rng-tools -y
-
-# Generating entropy for ipa-server-install command
-rngd -r /dev/urandom
+yum install chrony ipa-server bind bind-dyndb-ldap ipa-server-dns rng-tools -y
 
 # Check if the package installation was OK #
-pkgchk=$(echo $?)
-if [ "$pkgchk" -ne 0 ]; then
+PKGCHK=$(echo $?)
+if [ "$PKGCHK" -ne 0 ]; then
    echo -e "\nCan't install ipa-server package! Something went wrong, exiting! \n"
    exit 1
 fi
+
+# Generating entropy for ipa-server-install command
+rngd -r /dev/urandom
 
 # Configure IPA with basic options #
 ipa-server-install --hostname="$HOSTNAME" -n "$(hostname -d)" -r "$(hostname -d| tr [a-z] [A-Z])" -p "$PASSWORD" -a "$PASSWORD" --idstart=1999 --idmax=5000 --setup-dns --no-forwarders -U
 
 # Check to see if the above was successful or not #
-installchk=$(echo $?)
-if [ "$installchk" -ne 0 ]; then
+INSTALLCHK=$(echo $?)
+if [ "$INSTALLCHK" -ne 0 ]; then
    echo -e "\nSomething went wrong, exiting! \n"
    exit 1
 fi
 
-# Add FirewallD rules necessary for IPA Server #
-systemctl start firewalld
-systemctl enable firewalld
+# Start and enable firewalld chronyd #
+systemctl start firewalld chronyd
+systemctl enable firewalld chronyd 
 
+# Enable required firewalld rules for IPA Server #
 firewall-cmd --permanent --add-port=80/tcp \
 --add-port=443/tcp \
 --add-port=389/tcp \
