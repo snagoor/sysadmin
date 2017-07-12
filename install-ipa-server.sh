@@ -1,38 +1,105 @@
 ### This script is intended for testing IPA with basic installation + bind ###
 ### Below are the mandatory steps that one should take care before executing this script ###
-### 1. Fresh RHEL 7.2 x86_64 system is installed with 4GB RAM (Mandatory) ###
+### 1. Fresh RHEL 7 or CentOS 7 system installed and access to yum repository with 4GB RAM (Mandatory) ###
 ### 2. IP Address is configured on the system (Mandatory) ###
 ### 3. System should either be registered to base repository or configure local yum repository using RHEL7.2 DVD/ISO (Mandatory) ###
 ### 4. Hostname would be automatically configured as a part of script execution ###
 ### 5. Provide password when promoted, which should be more than 8 characters (Mandatory). If password is not provided, then default password would be set as "RedHat1!" ###
 ### If you find any issues with this script, send a pull request or email nagoor.s@gmail.com ###
 
-#! /bin/bash
+#!/bin/bash
 
-unset PASSWORD PKGCHK INSTALLCHK
-echo ""
-read -s -p "Enter password for the admin user : " PASSWORD
+unset PASSWORD PKG_CHECK INSTALL_CHECK CHECK_NR EL7_OS FQDN_CHECK READ_FQDN READ_INPUT YN
 
-if [ -z "$PASSWORD" ]; then
-   echo -e "\nSetting the default password RedHat1!\n"
+function root_check() {
+# Ensure that only root user can excute this script
+if [ "$(id -u)" != "0" ]; then
+   echo -e "\nThis script must be run as root. Exiting for now.\n" 1>&2
+   exit 1
+fi
+}
+
+function os_check() {
+# Check Operating System version, its only supported on RHEL 7 or CentOS 7 derivatives
+uname -r | grep el7
+EL7_OS=$(echo $?)
+if [ "$EL7_OS" -ne 0 ]; then
+   echo -e "\nIncompatible OS detected. Only RHEL 7 and CentOS 7 derivatives are supported. Exiting !\n"
+}
+
+function name_resolution_check() {
+# Function to check the name resolution on the system
+CHECK_NR=$(getent hosts "$HOSTNAME")
+if [ "$CHECK_NR" -ne 0 ]; then
+   echo -e "\nName Resolution error. Adding hostname entry in /etc/hosts file\n"
+   echo -e "$(hostname -I)\t $(hostname -f)\t $(hostname -s)" >> /etc/hosts
+fi
+}
+
+function hostname_check() {
+# check if hostname is not localhost
+if [ "$HOSTNAME" == "localhost" || "$(hostname -f)" == "localhost.localdomain" ]; then
+   echo -e "\nHostname is Invalid. Please change hostname"
+   change_hostname
+fi
+}
+
+function change_hostname() {
+read -p "Please provide a Fully Qualified Domain Name (FQDN)[Ex: ipa.example.com] : " READ_FQDN
+FQDN_CHECK=$(tr -dc '.' <<< $READ_FQDN | awk '{print length; }')
+if [ "$FQDN_CHECK" -lt 2 ]; then
+   read -p "\nIncorrect FQDN name specified\n. Would you like to retry changing hostname? [Y/N] : " YN
+   if [ "$YN" == "Y" || "$YN" == "y" ]; then
+      change_hostname
+   else
+      echo -e "\nCan't continue further without a valid hostname. Exiting! \n"
+      exit 99
+   fi
+else
+   hostname_check
+fi
+
+hostnamectl set-hostname $READ_FQDN
+hostname $READ_FQDN
+}
+
+function package_installation() {
+# Update all the latest patches #
+yum update -y
+# Install IPA related packages #
+yum install chrony ipa-server bind bind-dyndb-ldap ipa-server-dns rng-tools -y
+}
+
+### Main Program starts from here ###
+# Root User check #
+root_check
+
+# Valid Operating System check #
+os_check
+
+# Prompt User to input password
+echo
+read -s -p "NOTE: Password must be more than 8 characters. Enter password for the admin user : " PASSWORD
+# If provided password is empty or less than 8 characters, then set default password #
+if [ "${#PASSWORD}" -lt 8 || -z "$PASSWORD" ]; then
+   echo -e "\nLength of the password is less than 8 characters. Setting the default password RedHat1!\n"
    PASSWORD="RedHat1!"
 fi
 
-# Setting Hostname and editing /etc/hosts to add IPA server entry #
-hostnamectl set-hostname ipa.lab.example.com
-hostname ipa.lab.example.com
+# Prompt user to change hostname and entry in /etc/hosts file #
+read -p "Current Hostname is : $HOSTNAME. Would you like to change it ? [Y/N] : " READ_INPUT
+if [ "$READ_INPUT" == "Y" || "$READ_INPUT" == "y" ]; then
+   change_hostname
+else
+   hostname_check
+fi
 
-echo -e "$(hostname -I) \t $(hostname -f) \t $(hostname -s)" >> /etc/hosts
-
-# Update all the latest patches #
-yum update -y
-
-# Install IPA related packages #
-yum install chrony ipa-server bind bind-dyndb-ldap ipa-server-dns rng-tools -y
+# Call package_installation function #
+package_installation
 
 # Check if the package installation was OK #
-PKGCHK=$(echo $?)
-if [ "$PKGCHK" -ne 0 ]; then
+PKG_CHECK=$(echo $?)
+if [ "$PKG_CHECK" -ne 0 ]; then
    echo -e "\nCan't install ipa-server package! Something went wrong, exiting! \n"
    exit 1
 fi
@@ -44,15 +111,16 @@ rngd -r /dev/urandom
 ipa-server-install --hostname="$HOSTNAME" -n "$(hostname -d)" -r "$(hostname -d| tr [a-z] [A-Z])" -p "$PASSWORD" -a "$PASSWORD" --idstart=1999 --idmax=5000 --setup-dns --no-forwarders -U
 
 # Check to see if the above was successful or not #
-INSTALLCHK=$(echo $?)
-if [ "$INSTALLCHK" -ne 0 ]; then
-   echo -e "\nSomething went wrong, exiting! \n"
+INSTALL_CHECK=$(echo $?)
+if [ "$INSTALL_CHECK" -ne 0 ]; then
+   echo -e "\nSomething went wrong during execution of ipa-server-install command"
+   echo -e "Check /var/log/ipaserver-install.log for errors, Exiting! \n"
    exit 1
 fi
 
-# Start and enable firewalld chronyd #
+# Start and enable firewalld and chronyd #
 systemctl start firewalld chronyd
-systemctl enable firewalld chronyd 
+systemctl enable firewalld chronyd
 
 # Enable required firewalld rules for IPA Server #
 firewall-cmd --permanent --add-port=80/tcp \
