@@ -9,7 +9,7 @@
 
 #!/bin/bash
 
-unset PASSWORD PKG_CHECK INSTALL_CHECK CHECK_NR EL7_OS FQDN_CHECK READ_FQDN READ_INPUT YN
+unset PASSWORD PKG_CHECK INSTALL_CHECK CHECK_NR EL7_OS FQDN_CHECK READ_FQDN READ_INPUT CHG_HOST_YN DNS_YN
 
 function root_check() {
 # Ensure that only root user can excute this script
@@ -49,8 +49,8 @@ function change_hostname() {
 read -p "Please provide a Fully Qualified Domain Name (FQDN)[Ex: ipa.example.com] : " READ_FQDN
 FQDN_CHECK=$(tr -dc '.' <<< $READ_FQDN | awk '{print length; }')
 if [ "$FQDN_CHECK" -lt "2" ]; then
-   read -p "\nIncorrect FQDN name specified\n. Would you like to retry changing hostname? [Y/N] : " YN
-   if [ "$YN" == "Y" || "$YN" == "y" ]; then
+   read -p "\nIncorrect FQDN name specified\n. Would you like to retry changing hostname? [Y/N] : " CHG_HOST_YN
+   if [ "$CHG_HOST_YN" == "Y" ] || [ "$CHG_HOST_YN" == "y" ]; then
       change_hostname
    else
       echo -e "\nCan't continue further without a valid hostname. Exiting! \n"
@@ -64,12 +64,9 @@ hostnamectl set-hostname $READ_FQDN
 hostname $READ_FQDN
 }
 
-function package_installation() {
 # Update all the latest patches #
 yum update -y
 # Install IPA related packages #
-yum install chrony ipa-server bind bind-dyndb-ldap ipa-server-dns rng-tools -y
-}
 
 ### Main Program starts from here ###
 # Root User check #
@@ -89,14 +86,17 @@ fi
 
 # Prompt user to change hostname and entry in /etc/hosts file #
 read -p "Current Hostname is $HOSTNAME. Would you like to change it ? [Y/N] : " READ_INPUT
-if [ "$READ_INPUT" == "Y" || "$READ_INPUT" == "y" ]; then
+if [ "$READ_INPUT" == "Y" ] || [ "$READ_INPUT" == "y" ]; then
    change_hostname
 else
    hostname_check
 fi
 
-# Call package_installation function #
-package_installation
+# Update latest patches before installation of IPA Server #
+yum update -y
+
+# Install rng-tools RPMs to generate Entropy #
+yum install rng-tools -y
 
 # Check if the package installation was OK #
 PKG_CHECK=$(echo $?)
@@ -110,9 +110,11 @@ rngd -r /dev/urandom
 
 # Configure IPA with basic options #
 read -p "Would you like to configure Integrated DNS with IPA ? [y/n] : " DNS_YN
-if [ "$DNS_YN" == "Y" || "$DNS_YN" == "y" ]; then
+if [ "$DNS_YN" == "Y" ] || [ "$DNS_YN" == "y" ]; then
+   yum install chrony ipa-server bind bind-dyndb-ldap ipa-server-dns -y
    ipa-server-install --hostname="$HOSTNAME" -n "$(hostname -d)" -r "$(hostname -d| tr [a-z] [A-Z])" -p "$PASSWORD" -a "$PASSWORD" -P "$PASSWORD" --idstart=1999 --idmax=5000 --setup-dns --no-forwarders -U
 else 
+   yum install chrony ipa-server -y
    ipa-server-install --hostname="$HOSTNAME" -n "$(hostname -d)" -r "$(hostname -d| tr [a-z] [A-Z])" -p "$PASSWORD" -a "$PASSWORD" -P "$PASSWORD" --idstart=1999 --idmax=5000 --no-forwarders -U
 fi
 # Check to see if the above was successful or not #
