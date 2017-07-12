@@ -24,6 +24,9 @@ hostname ipa.lab.example.com
 
 echo -e "$(hostname -I) \t $(hostname -f) \t $(hostname -s)" >> /etc/hosts
 
+# Update all the latest patches #
+yum update -y
+
 # Install IPA related packages #
 yum install ipa-server bind bind-dyndb-ldap ipa-server-dns rng-tools -y
 
