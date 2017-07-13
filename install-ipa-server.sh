@@ -37,6 +37,15 @@ if [ "$CHECK_NR" != "0" ]; then
 fi
 }
 
+function package_installation_check() {
+# Check if the package installation was OK #
+PKG_CHECK=$(echo $?)
+if [ "$PKG_CHECK" -ne "0" ]; then
+   echo -e "\nCan't install packages! Something went wrong, Exiting! \n"
+   exit 1
+fi
+}
+
 function hostname_check() {
 # check if hostname is not localhost
 if [ "$HOSTNAME" == "localhost" ] || [ "$(hostname -f)" == "localhost.localdomain" ]; then
@@ -59,16 +68,13 @@ if [ "$FQDN_CHECK" -lt "2" ]; then
 else
    hostname_check
 fi
-
 hostnamectl set-hostname $READ_FQDN
 hostname $READ_FQDN
 }
 
-# Update all the latest patches #
-yum update -y
-# Install IPA related packages #
 
 ### Main Program starts from here ###
+
 # Root User check #
 root_check
 
@@ -94,16 +100,11 @@ fi
 
 # Update latest patches before installation of IPA Server #
 yum update -y
+package_installation_check
 
 # Install rng-tools RPMs to generate Entropy #
 yum install rng-tools -y
-
-# Check if the package installation was OK #
-PKG_CHECK=$(echo $?)
-if [ "$PKG_CHECK" -ne "0" ]; then
-   echo -e "\nCan't install ipa-server package! Something went wrong, exiting! \n"
-   exit 1
-fi
+package_installation_check
 
 # Generating entropy for ipa-server-install command
 rngd -r /dev/urandom
@@ -111,13 +112,18 @@ rngd -r /dev/urandom
 # Configure IPA with basic options #
 read -p "Would you like to configure Integrated DNS with IPA ? [y/n] : " DNS_YN
 if [ "$DNS_YN" == "Y" ] || [ "$DNS_YN" == "y" ]; then
+   # Install IPA related packages #
    yum install chrony ipa-server bind bind-dyndb-ldap ipa-server-dns -y
-   ipa-server-install --hostname="$HOSTNAME" -n "$(hostname -d)" -r "$(hostname -d| tr [a-z] [A-Z])" -p "$PASSWORD" -a "$PASSWORD" -P "$PASSWORD" --idstart=1999 --idmax=5000 --setup-dns --no-forwarders -U
+   package_installation_check
+   ipa-server-install --hostname="$HOSTNAME" -n "$(hostname -d)" -r "$(hostname -d| tr [a-z] [A-Z])" -p "$PASSWORD" -a "$PASSWORD" -P "$PASSWORD" --idstart=1999 --idmax=50000 --setup-dns --no-forwarders -U
 else 
+   # Install IPA related packages #
    yum install chrony ipa-server -y
-   ipa-server-install --hostname="$HOSTNAME" -n "$(hostname -d)" -r "$(hostname -d| tr [a-z] [A-Z])" -p "$PASSWORD" -a "$PASSWORD" -P "$PASSWORD" --idstart=1999 --idmax=5000 --no-forwarders -U
+   package_installation_check
+   ipa-server-install --hostname="$HOSTNAME" -n "$(hostname -d)" -r "$(hostname -d| tr [a-z] [A-Z])" -p "$PASSWORD" -a "$PASSWORD" -P "$PASSWORD" --idstart=1999 --idmax=50000 --no-forwarders -U
 fi
-# Check to see if the above was successful or not #
+
+# Check to see if the above ipa-server-install command was successful or not #
 INSTALL_CHECK=$(echo $?)
 if [ "$INSTALL_CHECK" -ne "0" ]; then
    echo -e "\nSomething went wrong during execution of ipa-server-install command"
@@ -149,4 +155,6 @@ firewall-cmd --reload >/dev/null 2>&1
 # Get the kerberos principal for admin user #
 echo "$PASSWORD" | kinit admin
 
-echo -e "\nIPA Server installation success\n"
+echo -e "\nIPA Server installation completed successfully"
+echo -e "All required communication ports are opened through firewalld service (No Further Action Required)"
+echo -e "Please browse https://$HOSTNAME to configure your IPA Server\n"
