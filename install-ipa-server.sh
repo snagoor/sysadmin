@@ -120,7 +120,7 @@ else
    # Install IPA related packages #
    yum install chrony ipa-server -y
    package_installation_check
-   ipa-server-install --hostname="$HOSTNAME" -n "$(hostname -d)" -r "$(hostname -d| tr [a-z] [A-Z])" -p "$PASSWORD" -a "$PASSWORD" -P "$PASSWORD" --idstart=1999 --idmax=50000 --no-forwarders -U
+   ipa-server-install --hostname="$HOSTNAME" -n "$(hostname -d)" -r "$(hostname -d| tr [a-z] [A-Z])" -p "$PASSWORD" -a "$PASSWORD" -P "$PASSWORD" --idstart=1999 --idmax=50000 -U
 fi
 
 # Check to see if the above ipa-server-install command was successful or not #
