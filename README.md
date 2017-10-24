@@ -6,31 +6,25 @@ This Script is helpful to print useful info about the system.
 
 ### SAMPLE OUTPUT ###
 
-System Information as on :- Sat Apr 16 02:12:38 IST 2016 
+~~~
 
-Fully Quailified Domain Name :- blueberry 
+System Information as on 	 : 	Tue Oct 24 22:14:22 IST 2017
+HostName 			 : 	foreman.example.com
+System Load Average 		 : 	1Min: 0.85 5Min: 0.68 15Min: 0.28
+Total Processes 		 : 	155
+Total RAM 			 : 	5.67 GB
+Usage of / FileSystem 		 : 	23% i.e. 8.4GB of 38GB
+Users Logged in 		 : 	1
+Uptime 			 : 	2 Minutes
+Memory Usage 			 : 	2.74 GB (Used) 2.46 GB (Free)
+Swap Usage 			 : 	0.00 GB (Used) 1.50 GB (Free)
+OS Version 			 : 	CentOS Linux release 7.4.1708 (Core)
+CPU Model Name 		 : 	Intel Core Processor (Haswell, no TSX)
+CPU Processor Count		 : 	2
+Network Interface(s) Information :
+eth0 : 192.168.121.177/24
 
-System Load Average :- 1 Min : 0.22	5 Min: 0.23	15 Min : 0.22 
-
-Total Processes :- 329 	Total RAM :- 15.37 GB 
-
-Usage of / FileSystem :- 48% i.e. 31GB of 68GB 
-
-Users Logged in :- 1  Uptime :- 6:27 Hours 
-
-Memory Usage :- 6.40 GB (Used) 4.65 GB (Free) 
-
-Swap Usage :- 0.00 GB (Used) 7.69 GB (Free) 
-
-OS Version :- Fedora release 23 (Twenty Three) 
-
-Network Interface(s) Information:- 
-wlp3s0 : 192.168.123.104/24
-virbr0 : 192.168.122.1/24
-virbr4 : 192.168.2.1/24
-virbr2 : 192.168.100.1/24
-virbr1 : 172.25.18.1/24
-virbr3 : 192.168.1.1/24
+~~~
 
 # Script which converts RHEL NIC's to older style ethX interfaces [rhel7_old_nic_style.sh]
 
