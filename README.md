@@ -15,11 +15,11 @@ Total Processes 		 : 	155
 Total RAM 			 : 	5.67 GB
 Usage of / FileSystem 		 : 	23% i.e. 8.4GB of 38GB
 Users Logged in 		 : 	1
-Uptime 			 : 	2 Minutes
+Uptime 			         : 	2 Minutes
 Memory Usage 			 : 	2.74 GB (Used) 2.46 GB (Free)
 Swap Usage 			 : 	0.00 GB (Used) 1.50 GB (Free)
 OS Version 			 : 	CentOS Linux release 7.4.1708 (Core)
-CPU Model Name 		 : 	Intel Core Processor (Haswell, no TSX)
+CPU Model Name 		         : 	Intel Core Processor (Haswell, no TSX)
 CPU Processor Count		 : 	2
 Network Interface(s) Information :
 eth0 : 192.168.121.177/24
