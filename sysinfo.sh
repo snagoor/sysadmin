@@ -20,22 +20,22 @@ sys_init() {
 	SYS_LOAD_1M=""
 	SYS_LOAD_5M=""
 	SYS_LOAD_15M=""
-	RED=`tput setaf 1`
-	GREEN=`tput setaf 2`
-	YELLOW=`tput setaf 3`
-	BLUE=`tput setaf 4`
-	MAGENTA=`tput setaf 5`
-	CYAN=`tput setaf 6`
-	WHITE=`tput setaf 7`
-	RESET=`tput sgr0`
+	RED=$(tput setaf 1)
+	GREEN=$(tput setaf 2)
+	YELLOW=$(tput setaf 3)
+	BLUE=$(tput setaf 4)
+	MAGENTA=$(tput setaf 5)
+	CYAN=$(tput setaf 6)
+	WHITE=$(tput setaf 7)
+	RESET=$(tput sgr0)
 }
 
 backup_motd() {
 	if [ -f /etc/motd ]; then
-		 if [ "$(id -u)" == "0" ]; then
-	      cp -p /etc/motd /etc/motd-date-$(date +%Y-%m-%d-%s)
-     fi
-  fi
+          if [ "$(id -u)" == "0" ]; then
+             cp -p /etc/motd /etc/motd-date-$(date +%Y-%m-%d-%s)
+          fi
+	fi
 }
 
 sys_date() {
