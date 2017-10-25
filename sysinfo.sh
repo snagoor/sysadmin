@@ -28,6 +28,7 @@ sys_init() {
 	CYAN=$(tput setaf 6)
 	WHITE=$(tput setaf 7)
 	RESET=$(tput sgr0)
+	BOLD=$(tput bold)
 }
 
 backup_motd() {
@@ -103,20 +104,20 @@ processor_count() {
 }
 
 print_to_stdout() {
-	echo -e "\n${CYAN}System Information as on \t : \t${GREEN}$SYSDATE${RESET}"
-	echo -e "${CYAN}HostName \t\t\t : \t${GREEN}$SYSHOSTNAME${RESET}"
-	echo -e "${CYAN}System Load Average \t\t : \t${RED}1Min: ${GREEN}$SYS_LOAD_1M${RESET} ${RED}5Min: ${GREEN}$SYS_LOAD_5M${RESET} ${RED}15Min: ${GREEN}$SYS_LOAD_15M${RESET}"
-	echo -e "${CYAN}Total Processes \t\t : \t${GREEN}$TOTAL_PROCS${RESET}"
-	echo -e "${CYAN}Total RAM \t\t\t : \t${GREEN}$MEM_TOTAL${RESET}"
-	echo -e "${CYAN}Usage of / FileSystem \t\t : \t${GREEN}$ROOT_FS_SIZE${RESET}"
-	echo -e "${CYAN}Users Logged in \t\t : \t${GREEN}$USERS${RESET}"
-	echo -e "${CYAN}Uptime \t\t\t\t : \t${GREEN}$SYS_UPTIME${RESET}"
-	echo -e "${CYAN}Memory Usage \t\t\t : \t${GREEN}$MEM_USED ${RED}(Used)${RESET} ${GREEN}$MEM_FREE${RESET} ${YELLOW}(Free)${RESET}"
-	echo -e "${CYAN}Swap Usage \t\t\t : \t${GREEN}$SWAP_USED ${RED}(Used)${RESET} ${GREEN}$SWAP_FREE${RESET} ${YELLOW}(Free)${RESET}"
-	echo -e "${CYAN}OS Version \t\t\t : \t${GREEN}$OS_VERSION${RESET}"
-	echo -e "${CYAN}CPU Model Name \t\t\t : \t${GREEN}$CPU_MODEL${RESET}"
-	echo -e "${CYAN}CPU Processor Count \t\t : \t${GREEN}$PROC_COUNT${RESET}"
-	echo -e "${CYAN}Network Interface(s) Information : ${RESET}"
+	echo -e "\n${BOLD}${CYAN}System Information as on \t : \t${RESET}${GREEN}$SYSDATE${RESET}"
+	echo -e "${BOLD}${CYAN}HostName \t\t\t : \t${RESET}${GREEN}$SYSHOSTNAME${RESET}"
+	echo -e "${BOLD}${CYAN}System Load Average \t\t : \t${RESET}${RED}1Min: ${GREEN}$SYS_LOAD_1M${RESET} ${RED}5Min: ${GREEN}$SYS_LOAD_5M${RESET} ${RED}15Min: ${GREEN}$SYS_LOAD_15M${RESET}"
+	echo -e "${BOLD}${CYAN}Total Processes \t\t : \t${RESET}${GREEN}$TOTAL_PROCS${RESET}"
+	echo -e "${BOLD}${CYAN}Total RAM \t\t\t : \t${RESET}${GREEN}$MEM_TOTAL${RESET}"
+	echo -e "${BOLD}${CYAN}Usage of / FileSystem \t\t : \t${RESET}${GREEN}$ROOT_FS_SIZE${RESET}"
+	echo -e "${BOLD}${CYAN}Users Logged in \t\t : \t${RESET}${GREEN}$USERS${RESET}"
+	echo -e "${BOLD}${CYAN}Uptime \t\t\t\t : \t${RESET}${GREEN}$SYS_UPTIME${RESET}"
+	echo -e "${BOLD}${CYAN}Memory Usage \t\t\t : \t${RESET}${GREEN}$MEM_USED ${RED}(Used)${RESET} ${GREEN}$MEM_FREE${RESET} ${YELLOW}(Free)${RESET}"
+	echo -e "${BOLD}${CYAN}Swap Usage \t\t\t : \t${RESET}${GREEN}$SWAP_USED ${RED}(Used)${RESET} ${GREEN}$SWAP_FREE${RESET} ${YELLOW}(Free)${RESET}"
+	echo -e "${BOLD}${CYAN}OS Version \t\t\t : \t${RESET}${GREEN}$OS_VERSION${RESET}"
+	echo -e "${BOLD}${CYAN}CPU Model Name \t\t\t : \t${RESET}${GREEN}$CPU_MODEL${RESET}"
+	echo -e "${BOLD}${CYAN}CPU Processor Count \t\t : \t${RESET}${GREEN}$PROC_COUNT${RESET}"
+	echo -e "${BOLD}${CYAN}Network Interface(s) Information : ${RESET}"
 	printf '%s\n' "${GREEN}${NIC_INFO[@]}${RESET}"
 	echo -e ""
 }
