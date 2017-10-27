@@ -88,7 +88,7 @@ sys_os_version() {
 }
 
 sys_nic_interfaces() {
-	NIC_INFO=$(ip -4 -o addr | awk '!/^[0-9]*: ?lo|link\/ether/ {print $2" : "$4}')
+	NIC_INFO=$(ip -4 -o addr | awk '!/^[0-9]*: ?lo|link\/ether/ {print $2" : "$4}' | sort)
 }
 sys_uptime() {
 	SYS_UPTIME=$(uptime -p | sed -e 's/^up //' | awk '{for(i=1;i<=NF;i++)sub(/./,toupper(substr($i,1,1)),$i)}1')
