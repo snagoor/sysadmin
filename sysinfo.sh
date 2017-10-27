@@ -2,10 +2,10 @@
 sys_init() {
 	SYSDATE=""
 	SYSHOSTNAME=""
-	SYS_LOAD=0
-	TOTAL_PROCS=0
-	ROOT_FS_SIZE=0
-	USERS=0
+	SYS_LOAD=""
+	TOTAL_PROCS=""
+	ROOT_FS_SIZE=""
+	USERS=""
 	MEM_TOTAL=""
 	MEM_USED=""
 	MEM_FREE=""
@@ -13,8 +13,8 @@ sys_init() {
 	SWAP_USED=""
 	SWAP_FREE=""
 	OS_VERSION=""
-	NIC_INFO=0
-	SYS_UPTIME=0
+	NIC_INFO=""
+	SYS_UPTIME=""
 	CPU_MODEL=""
 	PROC_COUNT=""
 	SYS_LOAD_1M=""
@@ -48,7 +48,6 @@ sys_hostname() {
 }
 
 sys_load_avg() {
-	#SYS_LOAD=$(awk '{print "1Min : "$1  " 5Min: "$2  " 15Min : " $3}' /proc/loadavg)
 	SYS_LOAD_1M=$(awk '{print $1}' /proc/loadavg)
 	SYS_LOAD_5M=$(awk '{print $2}' /proc/loadavg)
 	SYS_LOAD_15M=$(awk '{print $3}' /proc/loadavg)
@@ -104,21 +103,21 @@ processor_count() {
 }
 
 print_to_stdout() {
-	echo -e "\n${BOLD}${CYAN}System Information as on \t : \t${RESET}${GREEN}$SYSDATE${RESET}"
-	echo -e "${BOLD}${CYAN}HostName \t\t\t : \t${RESET}${GREEN}$SYSHOSTNAME${RESET}"
-	echo -e "${BOLD}${CYAN}System Load Average \t\t : \t${RESET}${RED}1Min: ${GREEN}$SYS_LOAD_1M${RESET} ${RED}5Min: ${GREEN}$SYS_LOAD_5M${RESET} ${RED}15Min: ${GREEN}$SYS_LOAD_15M${RESET}"
-	echo -e "${BOLD}${CYAN}Total Processes \t\t : \t${RESET}${GREEN}$TOTAL_PROCS${RESET}"
-	echo -e "${BOLD}${CYAN}Total RAM \t\t\t : \t${RESET}${GREEN}$MEM_TOTAL${RESET}"
-	echo -e "${BOLD}${CYAN}Usage of / FileSystem \t\t : \t${RESET}${GREEN}$ROOT_FS_SIZE${RESET}"
-	echo -e "${BOLD}${CYAN}Users Logged in \t\t : \t${RESET}${GREEN}$USERS${RESET}"
-	echo -e "${BOLD}${CYAN}Uptime \t\t\t\t : \t${RESET}${GREEN}$SYS_UPTIME${RESET}"
-	echo -e "${BOLD}${CYAN}Memory Usage \t\t\t : \t${RESET}${GREEN}$MEM_USED ${RED}(Used)${RESET} ${GREEN}$MEM_FREE${RESET} ${YELLOW}(Free)${RESET}"
-	echo -e "${BOLD}${CYAN}Swap Usage \t\t\t : \t${RESET}${GREEN}$SWAP_USED ${RED}(Used)${RESET} ${GREEN}$SWAP_FREE${RESET} ${YELLOW}(Free)${RESET}"
-	echo -e "${BOLD}${CYAN}OS Version \t\t\t : \t${RESET}${GREEN}$OS_VERSION${RESET}"
-	echo -e "${BOLD}${CYAN}CPU Model Name \t\t\t : \t${RESET}${GREEN}$CPU_MODEL${RESET}"
-	echo -e "${BOLD}${CYAN}CPU Processor Count \t\t : \t${RESET}${GREEN}$PROC_COUNT${RESET}"
-	echo -e "${BOLD}${CYAN}Network Interface(s) Information : ${RESET}"
-	printf '%s\n' "${GREEN}${NIC_INFO[@]}${RESET}"
+	echo -e "\n${BOLD}${GREEN}System Information as on \t : \t${RESET}${CYAN}$SYSDATE${RESET}"
+	echo -e "${BOLD}${GREEN}HostName \t\t\t : \t${RESET}${CYAN}$SYSHOSTNAME${RESET}"
+	echo -e "${BOLD}${GREEN}System Load Average \t\t : \t${RESET}${RED}1Min: ${CYAN}$SYS_LOAD_1M${RESET} ${RED}5Min: ${CYAN}$SYS_LOAD_5M${RESET} ${RED}15Min: ${CYAN}$SYS_LOAD_15M${RESET}"
+	echo -e "${BOLD}${GREEN}Total Processes \t\t : \t${RESET}${CYAN}$TOTAL_PROCS${RESET}"
+	echo -e "${BOLD}${GREEN}Total RAM \t\t\t : \t${RESET}${CYAN}$MEM_TOTAL${RESET}"
+	echo -e "${BOLD}${GREEN}Usage of / FileSystem \t\t : \t${RESET}${CYAN}$ROOT_FS_SIZE${RESET}"
+	echo -e "${BOLD}${GREEN}Users Logged in \t\t : \t${RESET}${CYAN}$USERS${RESET}"
+	echo -e "${BOLD}${GREEN}Uptime \t\t\t\t : \t${RESET}${CYAN}$SYS_UPTIME${RESET}"
+	echo -e "${BOLD}${GREEN}Memory Usage \t\t\t : \t${RESET}${CYAN}$MEM_USED ${RED}(Used)${RESET} ${CYAN}$MEM_FREE${RESET} ${YELLOW}(Free)${RESET}"
+	echo -e "${BOLD}${GREEN}Swap Usage \t\t\t : \t${RESET}${CYAN}$SWAP_USED ${RED}(Used)${RESET} ${CYAN}$SWAP_FREE${RESET} ${YELLOW}(Free)${RESET}"
+	echo -e "${BOLD}${GREEN}OS Version \t\t\t : \t${RESET}${CYAN}$OS_VERSION${RESET}"
+	echo -e "${BOLD}${GREEN}CPU Model Name \t\t\t : \t${RESET}${CYAN}$CPU_MODEL${RESET}"
+	echo -e "${BOLD}${GREEN}CPU Processor Count \t\t : \t${RESET}${CYAN}$PROC_COUNT${RESET}"
+	echo -e "${BOLD}${GREEN}Network Interface(s) Information : ${RESET}"
+	printf '%s\n' "${CYAN}${NIC_INFO[@]}${RESET}"
 	echo -e ""
 }
 
