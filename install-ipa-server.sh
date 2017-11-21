@@ -83,6 +83,15 @@ cp -fp  /etc/resolv.conf-$timedate /etc/resolv.conf
 echo "nameserver $(hostname -I | cut -d ' ' -f1)" >> /etc/resolv.conf
 }
 
+function install_check() {
+# Check to see if the ipa-server-install command was successful or not #
+INSTALL_CHECK=$(echo $?)
+if [ "$INSTALL_CHECK" -ne "0" ]; then
+   echo -e "\nSomething went wrong during execution of ipa-server-install command"
+   echo -e "Check /var/log/ipaserver-install.log for errors, Exiting! \n"
+   exit 1
+fi
+}
 
 ### Main Program starts from here ###
 
@@ -128,20 +137,14 @@ if [ "$DNS_YN" == "Y" ] || [ "$DNS_YN" == "y" ]; then
    package_installation_check
    backup_etc_resolv_conf
    ipa-server-install --hostname="$HOSTNAME" -n "$(hostname -d)" -r "$(hostname -d| tr [a-z] [A-Z])" -p "$PASSWORD" -a "$PASSWORD" -P "$PASSWORD" --idstart=1999 --idmax=50000 --setup-dns --no-forwarders -U
+   install_check
    restore_etc_resolv_conf
 else 
    # Install IPA related packages #
    yum install chrony ipa-server -y
    package_installation_check
    ipa-server-install --hostname="$HOSTNAME" -n "$(hostname -d)" -r "$(hostname -d| tr [a-z] [A-Z])" -p "$PASSWORD" -a "$PASSWORD" -P "$PASSWORD" --idstart=1999 --idmax=50000 -U
-fi
-
-# Check to see if the above ipa-server-install command was successful or not #
-INSTALL_CHECK=$(echo $?)
-if [ "$INSTALL_CHECK" -ne "0" ]; then
-   echo -e "\nSomething went wrong during execution of ipa-server-install command"
-   echo -e "Check /var/log/ipaserver-install.log for errors, Exiting! \n"
-   exit 1
+   install_check
 fi
 
 # Start and enable firewalld and chronyd #
