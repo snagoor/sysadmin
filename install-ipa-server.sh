@@ -33,7 +33,7 @@ function name_resolution_check() {
 CHECK_NR=$(getent hosts "$HOSTNAME")
 if [ "$CHECK_NR" != "0" ]; then
    echo -e "\nName Resolution error. Adding hostname entry in /etc/hosts file\n"
-   echo -e "$(hostname -I)\t $(hostname -f)\t $(hostname -s)" >> /etc/hosts
+   echo -e "$(hostname -I | cut -d ' ' -f1)\t $(hostname -f)\t $(hostname -s)" >> /etc/hosts
 fi
 }
 
@@ -70,6 +70,17 @@ else
 fi
 hostnamectl set-hostname $READ_FQDN
 hostname $READ_FQDN
+}
+
+function backup_etc_resolv_conf() {
+timedate=$(date +%Y-%m-%d-%s)
+cp -fp /etc/resolv.conf /etc/resolv.conf-$timedate
+echo "nameserver $(hostname -I | cut -d ' ' -f1)" > /etc/resolv.conf
+}
+
+function restore_etc_resolv_conf() {
+cp -fp  /etc/resolv.conf-$timedate /etc/resolv.conf
+echo "nameserver $(hostname -I | cut -d ' ' -f1)" >> /etc/resolv.conf
 }
 
 
@@ -115,7 +126,9 @@ if [ "$DNS_YN" == "Y" ] || [ "$DNS_YN" == "y" ]; then
    # Install IPA related packages #
    yum install chrony ipa-server bind bind-dyndb-ldap ipa-server-dns -y
    package_installation_check
+   backup_etc_resolv_conf
    ipa-server-install --hostname="$HOSTNAME" -n "$(hostname -d)" -r "$(hostname -d| tr [a-z] [A-Z])" -p "$PASSWORD" -a "$PASSWORD" -P "$PASSWORD" --idstart=1999 --idmax=50000 --setup-dns --no-forwarders -U
+   restore_etc_resolv_conf
 else 
    # Install IPA related packages #
    yum install chrony ipa-server -y
