@@ -33,9 +33,9 @@ sys_init() {
 
 backup_motd() {
 	if [ -f /etc/motd ]; then
-          if [ "$(id -u)" == "0" ]; then
-             cp -p /etc/motd /etc/motd-date-$(date +%Y-%m-%d-%s)
-          fi
+           if [ "$(id -u)" == "0" ]; then
+              cp -p /etc/motd /etc/motd-date-$(date +%Y-%m-%d-%s)
+           fi
 	fi
 }
 
@@ -88,7 +88,7 @@ sys_os_version() {
 }
 
 sys_nic_interfaces() {
-	NIC_INFO=$(ip -4 -o addr | awk '!/^[0-9]*: ?lo|link\/ether/ {print $2" : "$4}' | sort)
+	NIC_INFO=$(ip -4 -o addr | awk '!/^[0-9]*: ?lo|link\/ether/ {print $2"\t : "$4}' | sort)
 }
 sys_uptime() {
 	SYS_UPTIME=$(uptime -p | sed -e 's/^up //' | awk '{for(i=1;i<=NF;i++)sub(/./,toupper(substr($i,1,1)),$i)}1')
@@ -103,21 +103,21 @@ processor_count() {
 }
 
 print_to_stdout() {
-	echo -e "\n${BOLD}${GREEN}System Information as on \t : \t${RESET}${CYAN}$SYSDATE${RESET}"
-	echo -e "${BOLD}${GREEN}HostName \t\t\t : \t${RESET}${CYAN}$SYSHOSTNAME${RESET}"
-	echo -e "${BOLD}${GREEN}System Load Average \t\t : \t${RESET}${RED}1Min: ${CYAN}$SYS_LOAD_1M${RESET} ${RED}5Min: ${CYAN}$SYS_LOAD_5M${RESET} ${RED}15Min: ${CYAN}$SYS_LOAD_15M${RESET}"
-	echo -e "${BOLD}${GREEN}Total Processes \t\t : \t${RESET}${CYAN}$TOTAL_PROCS${RESET}"
-	echo -e "${BOLD}${GREEN}Total RAM \t\t\t : \t${RESET}${CYAN}$MEM_TOTAL${RESET}"
-	echo -e "${BOLD}${GREEN}Usage of / FileSystem \t\t : \t${RESET}${CYAN}$ROOT_FS_SIZE${RESET}"
-	echo -e "${BOLD}${GREEN}Users Logged in \t\t : \t${RESET}${CYAN}$USERS${RESET}"
-	echo -e "${BOLD}${GREEN}Uptime \t\t\t\t : \t${RESET}${CYAN}$SYS_UPTIME${RESET}"
-	echo -e "${BOLD}${GREEN}Memory Usage \t\t\t : \t${RESET}${CYAN}$MEM_USED ${RED}(Used)${RESET} ${CYAN}$MEM_FREE${RESET} ${YELLOW}(Free)${RESET}"
-	echo -e "${BOLD}${GREEN}Swap Usage \t\t\t : \t${RESET}${CYAN}$SWAP_USED ${RED}(Used)${RESET} ${CYAN}$SWAP_FREE${RESET} ${YELLOW}(Free)${RESET}"
-	echo -e "${BOLD}${GREEN}OS Version \t\t\t : \t${RESET}${CYAN}$OS_VERSION${RESET}"
-	echo -e "${BOLD}${GREEN}CPU Model Name \t\t\t : \t${RESET}${CYAN}$CPU_MODEL${RESET}"
-	echo -e "${BOLD}${GREEN}CPU Processor Count \t\t : \t${RESET}${CYAN}$PROC_COUNT${RESET}"
+	echo -e "\n${BOLD}${GREEN}System Information as on \t : \t${RESET}${WHITE}$SYSDATE${RESET}"
+	echo -e "${BOLD}${GREEN}HostName \t\t\t : \t${RESET}${WHITE}$SYSHOSTNAME${RESET}"
+	echo -e "${BOLD}${GREEN}System Load Average \t\t : \t${RESET}${RED}1Min: ${WHITE}$SYS_LOAD_1M${RESET} ${RED}5Min: ${WHITE}$SYS_LOAD_5M${RESET} ${RED}15Min: ${WHITE}$SYS_LOAD_15M${RESET}"
+	echo -e "${BOLD}${GREEN}Total Processes \t\t : \t${RESET}${WHITE}$TOTAL_PROCS${RESET}"
+	echo -e "${BOLD}${GREEN}Total RAM \t\t\t : \t${RESET}${WHITE}$MEM_TOTAL${RESET}"
+	echo -e "${BOLD}${GREEN}Usage of / FileSystem \t\t : \t${RESET}${WHITE}$ROOT_FS_SIZE${RESET}"
+	echo -e "${BOLD}${GREEN}Users Logged in \t\t : \t${RESET}${WHITE}$USERS${RESET}"
+	echo -e "${BOLD}${GREEN}Uptime \t\t\t\t : \t${RESET}${WHITE}$SYS_UPTIME${RESET}"
+	echo -e "${BOLD}${GREEN}Memory Usage \t\t\t : \t${RESET}${WHITE}$MEM_USED ${RED}(Used)${RESET} ${WHITE}$MEM_FREE${RESET} ${YELLOW}(Free)${RESET}"
+	echo -e "${BOLD}${GREEN}Swap Usage \t\t\t : \t${RESET}${WHITE}$SWAP_USED ${RED}(Used)${RESET} ${WHITE}$SWAP_FREE${RESET} ${YELLOW}(Free)${RESET}"
+	echo -e "${BOLD}${GREEN}OS Version \t\t\t : \t${RESET}${WHITE}$OS_VERSION${RESET}"
+	echo -e "${BOLD}${GREEN}CPU Model Name \t\t\t : \t${RESET}${WHITE}$CPU_MODEL${RESET}"
+	echo -e "${BOLD}${GREEN}CPU Processor Count \t\t : \t${RESET}${WHITE}$PROC_COUNT${RESET}"
 	echo -e "${BOLD}${GREEN}Network Interface(s) Information : ${RESET}"
-	printf '%s\n' "${CYAN}${NIC_INFO[@]}${RESET}"
+	printf '%s\n' "${WHITE}${NIC_INFO[@]}${RESET}"
 	echo -e ""
 }
 
