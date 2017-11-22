@@ -73,7 +73,7 @@ hostname $READ_FQDN
 }
 
 function backup_etc_resolv_conf() {
-timedate=$(date +%Y-%m-%d-%s)
+timedate=$(date +%Y-%m-%d-%H)
 cp -fp /etc/resolv.conf /etc/resolv.conf-$timedate
 echo "nameserver $(hostname -I | cut -d ' ' -f1)" > /etc/resolv.conf
 }
