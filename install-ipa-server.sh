@@ -133,7 +133,7 @@ rngd -r /dev/urandom
 read -p "Would you like to configure Integrated DNS with IPA ? [y/n] : " DNS_YN
 if [ "$DNS_YN" == "Y" ] || [ "$DNS_YN" == "y" ]; then
    # Install IPA related packages #
-   yum install chrony ipa-server bind bind-dyndb-ldap ipa-server-dns -y
+   yum install ipa-server bind bind-dyndb-ldap ipa-server-dns -y
    package_installation_check
    backup_etc_resolv_conf
    ipa-server-install --hostname="$HOSTNAME" -n "$(hostname -d)" -r "$(hostname -d| tr [a-z] [A-Z])" -p "$PASSWORD" -a "$PASSWORD" --idstart=1999 --idmax=50000 --setup-dns --no-forwarders -U
@@ -141,7 +141,7 @@ if [ "$DNS_YN" == "Y" ] || [ "$DNS_YN" == "y" ]; then
    restore_etc_resolv_conf
 else 
    # Install IPA related packages #
-   yum install chrony ipa-server -y
+   yum install ipa-server -y
    package_installation_check
    ipa-server-install --hostname="$HOSTNAME" -n "$(hostname -d)" -r "$(hostname -d| tr [a-z] [A-Z])" -p "$PASSWORD" -a "$PASSWORD" --idstart=1999 --idmax=50000 -U
    install_check
