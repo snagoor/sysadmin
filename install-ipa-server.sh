@@ -136,20 +136,16 @@ if [ "$DNS_YN" == "Y" ] || [ "$DNS_YN" == "y" ]; then
    yum install chrony ipa-server bind bind-dyndb-ldap ipa-server-dns -y
    package_installation_check
    backup_etc_resolv_conf
-   ipa-server-install --hostname="$HOSTNAME" -n "$(hostname -d)" -r "$(hostname -d| tr [a-z] [A-Z])" -p "$PASSWORD" -a "$PASSWORD" -P "$PASSWORD" --idstart=1999 --idmax=50000 --setup-dns --no-forwarders -U
+   ipa-server-install --hostname="$HOSTNAME" -n "$(hostname -d)" -r "$(hostname -d| tr [a-z] [A-Z])" -p "$PASSWORD" -a "$PASSWORD" --idstart=1999 --idmax=50000 --setup-dns --no-forwarders -U
    install_check
    restore_etc_resolv_conf
 else 
    # Install IPA related packages #
    yum install chrony ipa-server -y
    package_installation_check
-   ipa-server-install --hostname="$HOSTNAME" -n "$(hostname -d)" -r "$(hostname -d| tr [a-z] [A-Z])" -p "$PASSWORD" -a "$PASSWORD" -P "$PASSWORD" --idstart=1999 --idmax=50000 -U
+   ipa-server-install --hostname="$HOSTNAME" -n "$(hostname -d)" -r "$(hostname -d| tr [a-z] [A-Z])" -p "$PASSWORD" -a "$PASSWORD" --idstart=1999 --idmax=50000 -U
    install_check
 fi
-
-# Start and enable firewalld and chronyd #
-systemctl start firewalld chronyd
-systemctl enable firewalld chronyd
 
 # Enable required firewalld rules for IPA Server #
 firewall-cmd --permanent --add-port=80/tcp \
