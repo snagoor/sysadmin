@@ -9,7 +9,7 @@
 
 #!/bin/bash
 
-unset PASSWORD PKG_CHECK INSTALL_CHECK CHECK_NR EL7_OS FQDN_CHECK READ_FQDN READ_INPUT CHG_HOST_YN DNS_YN
+unset PASSWORD PKG_CHECK INSTALL_CHECK CHECK_NR EL7_OS FQDN_CHECK READ_FQDN READ_INPUT CHG_HOST_YN DNS_YN TIMEDATE
 
 function root_check() {
 # Ensure that only root user can excute this script
@@ -57,8 +57,9 @@ fi
 function change_hostname() {
 read -p "Please provide a Fully Qualified Domain Name (FQDN)[Ex: ipa.example.com] : " READ_FQDN
 FQDN_CHECK=$(tr -dc '.' <<< $READ_FQDN | awk '{print length; }')
-if [ "$FQDN_CHECK" -lt "2" ]; then
-   read -p "\nIncorrect FQDN name specified\n. Would you like to retry changing hostname? [Y/N] : " CHG_HOST_YN
+if [ ${#FQDN_CHECK} -lt 2 ]; then
+    echo -e "\nIncorrect FQDN name specified"
+    read -p "Would you like to retry changing hostname? [Y/N] : " CHG_HOST_YN
    if [ "$CHG_HOST_YN" == "Y" ] || [ "$CHG_HOST_YN" == "y" ]; then
       change_hostname
    else
@@ -72,14 +73,9 @@ hostnamectl set-hostname $READ_FQDN
 hostname $READ_FQDN
 }
 
-function backup_etc_resolv_conf() {
-timedate=$(date +%Y-%m-%d-%H)
-cp -fp /etc/resolv.conf /etc/resolv.conf-$timedate
-echo "nameserver $(hostname -I | cut -d ' ' -f1)" > /etc/resolv.conf
-}
-
-function restore_etc_resolv_conf() {
-cp -fp  /etc/resolv.conf-$timedate /etc/resolv.conf
+function modify_etc_resolv_conf() {
+TIMEDATE=$(date +%Y-%m-%d-%H)
+cp -fp /etc/resolv.conf{,-$TIMEDATE}
 echo "nameserver $(hostname -I | cut -d ' ' -f1)" >> /etc/resolv.conf
 }
 
@@ -135,15 +131,15 @@ if [ "$DNS_YN" == "Y" ] || [ "$DNS_YN" == "y" ]; then
    # Install IPA related packages #
    yum install ipa-server bind bind-dyndb-ldap ipa-server-dns -y
    package_installation_check
-   backup_etc_resolv_conf
-   ipa-server-install --hostname="$HOSTNAME" -n "$(hostname -d)" -r "$(hostname -d| tr [a-z] [A-Z])" -p "$PASSWORD" -a "$PASSWORD" --idstart=1999 --idmax=50000 --setup-dns --no-forwarders -U
+   modify_etc_resolv_conf
+   ipa-server-install --hostname="$HOSTNAME" -n "$(hostname -d)" -r "$(hostname -d| tr [a-z] [A-Z])" -p "$PASSWORD" -a "$PASSWORD" --idstart=1999 --idmax=50000 --setup-dns --auto-reverse --no-forwarders --mkhomedir -U
    install_check
    restore_etc_resolv_conf
 else 
    # Install IPA related packages #
    yum install ipa-server -y
    package_installation_check
-   ipa-server-install --hostname="$HOSTNAME" -n "$(hostname -d)" -r "$(hostname -d| tr [a-z] [A-Z])" -p "$PASSWORD" -a "$PASSWORD" --idstart=1999 --idmax=50000 -U
+   ipa-server-install --hostname="$HOSTNAME" -n "$(hostname -d)" -r "$(hostname -d| tr [a-z] [A-Z])" -p "$PASSWORD" -a "$PASSWORD" --idstart=1999 --idmax=50000 --mkhomedir -U
    install_check
 fi
 
