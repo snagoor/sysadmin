@@ -134,7 +134,6 @@ if [ "$DNS_YN" == "Y" ] || [ "$DNS_YN" == "y" ]; then
    modify_etc_resolv_conf
    ipa-server-install --hostname="$HOSTNAME" -n "$(hostname -d)" -r "$(hostname -d| tr [a-z] [A-Z])" -p "$PASSWORD" -a "$PASSWORD" --idstart=1999 --idmax=50000 --setup-dns --auto-reverse --no-forwarders --mkhomedir -U
    install_check
-   restore_etc_resolv_conf
 else 
    # Install IPA related packages #
    yum install ipa-server -y
