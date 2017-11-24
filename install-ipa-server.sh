@@ -56,8 +56,8 @@ fi
 
 function change_hostname() {
 read -p "Please provide a Fully Qualified Domain Name (FQDN)[Ex: ipa.example.com] : " READ_FQDN
-FQDN_CHECK=$(tr -dc '.' <<< $READ_FQDN | awk '{print length; }')
-if [ ${#FQDN_CHECK} -lt 2 ]; then
+FQDN_CHECK=$(tr -dc '.' <<< $READ_FQDN | wc -c)
+if [ $FQDN_CHECK -lt 2 ]; then
     echo -e "\nIncorrect FQDN name specified"
     read -p "Would you like to retry changing hostname? [Y/N] : " CHG_HOST_YN
    if [ "$CHG_HOST_YN" == "Y" ] || [ "$CHG_HOST_YN" == "y" ]; then
@@ -102,8 +102,8 @@ echo
 read -s -p "NOTE: Password must be more than 8 characters. Enter password for the admin user : " PASSWORD
 # If provided password is empty or less than 8 characters, then set default password #
 if [ -z "$PASSWORD" ] || [ "${#PASSWORD}" -lt "8" ]; then
-   echo -e "\nLength of the password is less than 8 characters. Setting the default password RedHat1!\n"
-   PASSWORD="RedHat1!"
+   echo -e "\nLength of the password is less than 8 characters. Setting the default password 'P@ssw0rd'\n"
+   PASSWORD="P@ssw0rd"
 fi
 
 # Prompt user to change hostname and entry in /etc/hosts file #
@@ -132,7 +132,7 @@ if [ "$DNS_YN" == "Y" ] || [ "$DNS_YN" == "y" ]; then
    yum install ipa-server bind bind-dyndb-ldap ipa-server-dns -y
    package_installation_check
    modify_etc_resolv_conf
-   ipa-server-install --hostname="$HOSTNAME" -n "$(hostname -d)" -r "$(hostname -d| tr [a-z] [A-Z])" -p "$PASSWORD" -a "$PASSWORD" --idstart=1999 --idmax=50000 --setup-dns --auto-reverse --no-forwarders --mkhomedir -U
+   ipa-server-install --hostname="$HOSTNAME" -n "$(hostname -d)" -r "$(hostname -d| tr [a-z] [A-Z])" -p "$PASSWORD" -a "$PASSWORD" --idstart=1999 --idmax=50000 --setup-dns --auto-reverse --allow-zone-overlap --no-forwarders --mkhomedir -U
    install_check
 else 
    # Install IPA related packages #
