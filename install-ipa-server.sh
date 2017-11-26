@@ -181,7 +181,7 @@ if [ "$DNS_YN" == "Y" ] || [ "$DNS_YN" == "y" ]; then
   # modify_etc_resolv_conf
    calculate_reverse_zone
    add_new_fqdn_hosts
-   if [ "$FORWARDERS" == ""  ]; then
+   if [ -z "$FORWARDERS" ]; then
       ipa-server-install --hostname="$(hostname -f)" -n "$(hostname -d)" -r "$(hostname -d| tr [a-z] [A-Z])" -p "$PASSWORD" -a "$PASSWORD" --idstart=1999 --idmax=50000 --no-host-dns --allow-zone-overlap --setup-dns --reverse-zone "$REV_ZONE" --no-forwarders --mkhomedir -U
    else   
       ipa-server-install --hostname="$(hostname -f)" -n "$(hostname -d)" -r "$(hostname -d| tr [a-z] [A-Z])" -p "$PASSWORD" -a "$PASSWORD" --idstart=1999 --idmax=50000 --no-host-dns --allow-zone-overlap --setup-dns --reverse-zone "$REV_ZONE" --forwarder "$FORWARDERS" --mkhomedir -U
