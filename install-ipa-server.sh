@@ -1,15 +1,16 @@
 ### This script is intended for testing IPA with basic installation + bind ###
 ### Below are the mandatory steps that one should take care before executing this script ###
-### 1. Fresh RHEL 7 or CentOS 7 system installed and access to yum repository with 4GB RAM (Mandatory) ###
+### 1. Fresh RHEL 7 or CentOS 7 system installed with more than 2GB of RAM (Mandatory) ###
 ### 2. IP Address is configured on the system (Mandatory) ###
-### 3. System should either be registered to base repository or configure local yum repository using RHEL7.2 DVD/ISO (Mandatory) ###
-### 4. Hostname would be automatically configured as a part of script execution ###
+### 3. System should either be registered to base repository or configure local yum repository using DVD/ISO (Mandatory) ###
+### 4. Hostname would be automatically configured based on user input as a part of script execution ###
 ### 5. Provide password when promoted, which should be more than 8 characters (Mandatory). If password is not provided, then default password would be set as "RedHat1!" ###
+### 6. Nameserver entry configured in /etc/resolv.conf ###
 ### If you find any issues with this script, send a pull request or email nagoor.s@gmail.com ###
 
 #!/bin/bash
 
-unset PASSWORD PKG_CHECK INSTALL_CHECK CHECK_NR EL7_OS FQDN_CHECK READ_FQDN READ_INPUT CHG_HOST_YN DNS_YN TIMEDATE
+unset PASSWORD PKG_CHECK INSTALL_CHECK CHECK_NR EL7_OS FQDN_CHECK READ_FQDN READ_INPUT CHG_HOST_YN DNS_YN OLD_NAME NET_PREFIX NET_IP NET_BITS REV_ZONE
 
 function root_check() {
 # Ensure that only root user can excute this script
@@ -37,6 +38,11 @@ if [ "$CHECK_NR" != "0" ]; then
 fi
 }
 
+function add_new_fqdn_hosts() {
+sed -i '/'"$(hostname -I | cut -d ' ' -f1)"'/c \' /etc/hosts
+echo -e "$(hostname -I | cut -d ' ' -f1)\t $HOSTNAME" >> /etc/hosts
+}
+
 function package_installation_check() {
 # Check if the package installation was OK #
 PKG_CHECK=$(echo $?)
@@ -48,9 +54,16 @@ fi
 
 function hostname_check() {
 # check if hostname is not localhost
-if [ "$HOSTNAME" == "localhost" ] || [ "$(hostname -f)" == "localhost.localdomain" ]; then
+echo "$HOSTNAME" | grep -E '^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$' >/dev/null 2>&1
+VALID_NAME=$(echo $?)
+if [ "$HOSTNAME" == "localhost" ] || [ "$HOSTNAME" == "localhost.localdomain" ] || [ "$VALID_NAME" != 0 ]; then
    echo -e "\nHostname is Invalid. Please change hostname"
    change_hostname
+else
+   hostnamectl set-hostname "$READ_FQDN"
+   hostname "$READ_FQDN"
+   HOSTNAME=$READ_FQDN
+   add_new_fqdn_hosts
 fi
 }
 
@@ -67,17 +80,20 @@ if [ $FQDN_CHECK -lt 2 ]; then
       exit 99
    fi
 else
+   OLD_NAME=$HOSTNAME
+   HOSTNAME=$READ_FQDN
    hostname_check
 fi
-hostnamectl set-hostname $READ_FQDN
-hostname $READ_FQDN
 }
 
-function modify_etc_resolv_conf() {
-TIMEDATE=$(date +%Y-%m-%d-%H)
-cp -fp /etc/resolv.conf{,-$TIMEDATE}
-echo "nameserver $(hostname -I | cut -d ' ' -f1)" >> /etc/resolv.conf
-}
+# function modify_etc_resolv_conf() {
+# sed -i '/^nameserver/s/^/#/g' /etc/resolv.conf
+# sed  -i '1s/^/'"nameserver $(hostname -I | cut -d ' ' -f1)\n"'/' /etc/resolv.conf
+# }
+
+# function uncheck_nameservers() {
+# sed -i '/nameserver/s/^#//g' /etc/resolv.conf
+# }
 
 function install_check() {
 # Check to see if the ipa-server-install command was successful or not #
@@ -87,6 +103,34 @@ if [ "$INSTALL_CHECK" -ne "0" ]; then
    echo -e "Check /var/log/ipaserver-install.log for errors, Exiting! \n"
    exit 1
 fi
+}
+
+function calculate_reverse_zone() {
+NET_IP=$(ip -4 -o addr | awk '!/^[0-9]*: ?lo|link\/ether/ {print $4}' | tail -1 | cut -d '/' -f1)
+NET_PREFIX=$(ip -4 -o addr | awk '!/^[0-9]*: ?lo|link\/ether/ {print $4}' | tail -1 | cut -d '/' -f2)
+NET_BITS=$(echo "$NET_PREFIX/8" | bc)
+if [ "$NET_BITS" -eq 3 ]; then
+    REV_ZONE=$(echo "$NET_IP" | cut -d '.' -f1-3 | awk -F. '{print $3"."$2"."$1".in-addr.arpa"}' )
+elif [ "$NET_BITS" -eq 2 ]; then
+    REV_ZONE=$(echo "$NET_IP" | cut -d '.' -f1-2 | awk -F. '{print $2"."$1".in-addr.arpa"}' )
+else
+   REV_ZONE=$(echo "$NET_IP" | cut -d '.' -f1 | awk -F. '{print $1".in-addr.arpa"}' )
+fi
+}
+
+function find_forwarders() {
+NS_COUNT=$(grep nameserver /etc/resolv.conf | wc -l)
+if [ "$NS_COUNT" -gt 1 ]; then
+   # FORWARDERS=$(grep nameserver /etc/resolv.conf | cut -d ' ' -f2 | tr '\n' ',' | head -c -1)
+   FORWARDERS=$(grep nameserver /etc/resolv.conf | cut -d ' ' -f2 | head -1)
+else
+   FORWARDERS=""
+fi
+}
+
+function sync_local_time() {
+systemctl stop ntpd
+ntpdate in.pool.ntp.org
 }
 
 ### Main Program starts from here ###
@@ -107,7 +151,7 @@ if [ -z "$PASSWORD" ] || [ "${#PASSWORD}" -lt "8" ]; then
 fi
 
 # Prompt user to change hostname and entry in /etc/hosts file #
-read -p "Current Hostname is $HOSTNAME. Would you like to change it ? [Y/N] : " READ_INPUT
+read -p "Current Hostname is $(hostname -f). Would you like to change it ? [Y/N] : " READ_INPUT
 if [ "$READ_INPUT" == "Y" ] || [ "$READ_INPUT" == "y" ]; then
    change_hostname
 else
@@ -119,11 +163,14 @@ yum update -y
 package_installation_check
 
 # Install rng-tools RPMs to generate Entropy #
-yum install rng-tools -y
+yum install rng-tools ntp -y
 package_installation_check
 
-# Generating entropy for ipa-server-install command
+# Generating entropy for ipa-server-install command #
 rngd -r /dev/urandom
+
+# Sync localtime with NTP #
+sync_local_time
 
 # Configure IPA with basic options #
 read -p "Would you like to configure Integrated DNS with IPA ? [y/n] : " DNS_YN
@@ -131,14 +178,21 @@ if [ "$DNS_YN" == "Y" ] || [ "$DNS_YN" == "y" ]; then
    # Install IPA related packages #
    yum install ipa-server bind bind-dyndb-ldap ipa-server-dns -y
    package_installation_check
-   modify_etc_resolv_conf
-   ipa-server-install --hostname="$HOSTNAME" -n "$(hostname -d)" -r "$(hostname -d| tr [a-z] [A-Z])" -p "$PASSWORD" -a "$PASSWORD" --idstart=1999 --idmax=50000 --setup-dns --auto-reverse --allow-zone-overlap --no-forwarders --mkhomedir -U
+  # modify_etc_resolv_conf
+   calculate_reverse_zone
+   add_new_fqdn_hosts
+   if [ "$FORWARDERS" == ""  ]; then
+      ipa-server-install --hostname="$(hostname -f)" -n "$(hostname -d)" -r "$(hostname -d| tr [a-z] [A-Z])" -p "$PASSWORD" -a "$PASSWORD" --idstart=1999 --idmax=50000 --no-host-dns --allow-zone-overlap --setup-dns --reverse-zone "$REV_ZONE" --no-forwarders --mkhomedir -U
+   else   
+      ipa-server-install --hostname="$(hostname -f)" -n "$(hostname -d)" -r "$(hostname -d| tr [a-z] [A-Z])" -p "$PASSWORD" -a "$PASSWORD" --idstart=1999 --idmax=50000 --no-host-dns --allow-zone-overlap --setup-dns --reverse-zone "$REV_ZONE" --forwarder "$FORWARDERS" --mkhomedir -U
+   fi
    install_check
+#   uncheck_nameservers
 else 
    # Install IPA related packages #
    yum install ipa-server -y
    package_installation_check
-   ipa-server-install --hostname="$HOSTNAME" -n "$(hostname -d)" -r "$(hostname -d| tr [a-z] [A-Z])" -p "$PASSWORD" -a "$PASSWORD" --idstart=1999 --idmax=50000 --mkhomedir -U
+   ipa-server-install --hostname="$(hostname -f)" -n "$(hostname -d)" -r "$(hostname -d| tr [a-z] [A-Z])" -p "$PASSWORD" -a "$PASSWORD" --idstart=1999 --idmax=50000 --mkhomedir -U
    install_check
 fi
 
