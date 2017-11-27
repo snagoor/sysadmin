@@ -10,7 +10,7 @@
 
 #!/bin/bash
 
-unset PASSWORD PKG_CHECK INSTALL_CHECK CHECK_NR EL7_OS FQDN_CHECK READ_FQDN READ_INPUT CHG_HOST_YN DNS_YN OLD_NAME NET_PREFIX NET_IP NET_BITS REV_ZONE
+unset PASSWORD PKG_CHECK INSTALL_CHECK CHECK_NR EL7_OS FQDN_CHECK READ_FQDN READ_INPUT CHG_HOST_YN DNS_YN OLD_NAME NET_PREFIX NET_IP NET_BITS REV_ZONE VALID_NAME
 
 function root_check() {
 # Ensure that only root user can excute this script
@@ -141,6 +141,21 @@ root_check
 # Valid Operating System check #
 os_check
 
+# Update latest patches before installation of IPA Server #
+echo -e "\nUpdating all patches on system\n"
+yum update -y
+package_installation_check
+
+# Install rng-tools RPMs to generate Entropy #
+yum install rng-tools ntp -y
+package_installation_check
+
+# Generating entropy for ipa-server-install command #
+rngd -r /dev/urandom
+
+# Sync localtime with NTP #
+sync_local_time
+
 # Prompt User to input password
 echo
 read -s -p "NOTE: Password must be more than 8 characters. Enter password for the admin user : " PASSWORD
@@ -157,20 +172,6 @@ if [ "$READ_INPUT" == "Y" ] || [ "$READ_INPUT" == "y" ]; then
 else
    hostname_check
 fi
-
-# Update latest patches before installation of IPA Server #
-yum update -y
-package_installation_check
-
-# Install rng-tools RPMs to generate Entropy #
-yum install rng-tools ntp -y
-package_installation_check
-
-# Generating entropy for ipa-server-install command #
-rngd -r /dev/urandom
-
-# Sync localtime with NTP #
-sync_local_time
 
 # Configure IPA with basic options #
 read -p "Would you like to configure Integrated DNS with IPA ? [y/n] : " DNS_YN
